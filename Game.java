@@ -68,8 +68,6 @@ public class Game implements Runnable {
 		// For use in inner class
 		ff = f;
 
-		final GridParameter gp = new GridParameter();
-
 		// Top-level frame
 		final JFrame frame = new JFrame("Tetris");
 		frame.setBackground(Color.WHITE);
@@ -99,7 +97,6 @@ public class Game implements Runnable {
 		hold.setMinimumSize(new Dimension(84, 84));
 		holdLabel.setLabelFor(hold);
 		holdPanel.add(hold);
-		gp.setHoldPreview(hold);
 
 		JLabel levelLabel = new JLabel("Level:");
 		levelLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -112,7 +109,6 @@ public class Game implements Runnable {
 		level.setForeground(Color.RED);
 		holdPanel.add(level);
 		level.setFont(fBig);
-		gp.setLevel(level);
 
 		JLabel goalLabel = new JLabel("Goal:");
 		goalLabel.setFont(f);
@@ -139,10 +135,9 @@ public class Game implements Runnable {
 		scorePanel.add(horizontalGlue);
 
 		JLabel score = new JLabel("0");
-		score.setForeground(Color.RED);
+		score.setForeground(new Color(0, 102, 0));
 		score.setFont(f);
 		scorePanel.add(score);
-		gp.setScore(score);
 
 		JPanel status = new JPanel();
 		status.setOpaque(false);
@@ -201,7 +196,6 @@ public class Game implements Runnable {
 		time.setFont(f);
 		time.setAlignmentX(Component.CENTER_ALIGNMENT);
 		timePanel.add(time);
-		gp.setTime(time);
 
 		JPanel linesPanel = new JPanel();
 		linesPanel.setOpaque(false);
@@ -222,7 +216,6 @@ public class Game implements Runnable {
 		lines.setAlignmentX(Component.CENTER_ALIGNMENT);
 		linesLabel.setLabelFor(lines);
 		linesPanel.add(lines);
-		gp.setLines(lines);
 
 		JPanel actionPanel = new JPanel();
 		actionPanel.setOpaque(false);
@@ -233,18 +226,23 @@ public class Game implements Runnable {
 		actionPanel.add(action);
 
 		final JLabel[] queue = { queue0, queue1, queue2, queue3, queue4 };
+		final GridParameter gp = new GridParameter();
 		gp.setFrame(frame);
 		gp.setQueue(queue);
 		gp.setAction(action);
 		gp.setGoal(goal);
+		gp.setScore(score);
+		gp.setLevel(level);
+		gp.setLines(lines);
+		gp.setTime(time);
+		gp.setHoldPreview(hold);
 
 		// Make the game grid
 		final Grid game = new Grid(gp);
 		frame.getContentPane().add(game, BorderLayout.CENTER);
 		game.setForeground(Color.BLACK);
 		game.setBackground(Color.LIGHT_GRAY);
-		game.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null, null,
-				null, null));
+		game.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null, null, new Color(188, 143, 143), null));
 		game.addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusLost(FocusEvent arg0) {
