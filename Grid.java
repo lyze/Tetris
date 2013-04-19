@@ -2,7 +2,6 @@
  *
  */
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -16,7 +15,6 @@ import java.io.IOException;
 import java.security.InvalidParameterException;
 
 import javax.imageio.ImageIO;
-import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
@@ -30,8 +28,8 @@ import block.Block;
 import block.Empty;
 
 /**
- * The grid is stored in a 2 x 2 array, enumerating rows from bottom-to-top,
- * then left-to-right.
+ * The grid is stored in a 2D array, enumerating rows from bottom-to-top, then
+ * left-to-right.
  *
  * @author David Xu
  */
@@ -96,6 +94,7 @@ public class Grid extends JComponent {
 	 *            Queue of next pieces
 	 */
 	public Grid(GridParameter status) {
+		setFocusable(true);
 		if (status == null || status.hasNullFields())
 			throw new InvalidParameterException(
 					"Status parameter fields cannot be null.");
@@ -107,9 +106,6 @@ public class Grid extends JComponent {
 		linesStatus = status.getLines();
 		levelStatus = status.getLevel();
 		goalStatus = status.getGoal();
-
-		setBorder(BorderFactory.createLineBorder(Color.BLACK));
-		setFocusable(true);
 
 		timer = new Timer(interval, new ActionListener() {
 			@Override
@@ -184,10 +180,10 @@ public class Grid extends JComponent {
 												.toString() + "_21.png")), 0,
 										0, null);
 							} catch (IOException e) {
-								System.out
-										.println("Could not generate hold preview for "
-												+ current.type().toString()
-												+ " tetromino.");
+								System.out.println(
+										"Could not generate hold preview for "
+										+ current.type().toString()
+										+ " tetromino.");
 							}
 						}
 
@@ -476,7 +472,8 @@ public class Grid extends JComponent {
 		}
 
 		queue = factory.getInQueue(queuePreview.length);
-		for (final MutableInt n = new MutableInt(0); n.value < queue.length; n.value++) {
+		for (final MutableInt n = new MutableInt(0); n.value < queue.length;
+																	n.value++) {
 			queuePreview[n.value].setIcon(new Icon() {
 				private final int i = n.value;
 
