@@ -1,7 +1,14 @@
 package tetromino;
 
-import block.Block;
-import block.Empty;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.security.InvalidParameterException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import mino.Block;
+import mino.blocks.Empty;
+import mino.ghosts.Ghost;
 
 public abstract class Tetromino implements Playable {
 	private final static Block e = new Empty();
@@ -24,13 +31,16 @@ public abstract class Tetromino implements Playable {
 	private int y; // Vertical offset from bottom row (piece spawns
 					// in 21st row)
 	private final Block[][][] sprites;
+	private final Block[][][] ghosts;
 	private int rotation;
+	protected final Ghost ghost;
+	private int ghostY;
 
 	/**
-	 * Takes four block array states obtainable by clockwise rotation
+	 * Takes four mino array states obtainable by clockwise rotation
 	 *
 	 * @param g
-	 *            The game grid that this block should be bound to
+	 *            The game grid that this mino should be bound to
 	 * @param s0
 	 * @param s1
 	 * @param s2
@@ -38,13 +48,13 @@ public abstract class Tetromino implements Playable {
 	 * @param h
 	 *            The respective heights of each sprite.
 	 */
-	Tetromino(Block[][] g, Block[][] s0, Block[][] s1, Block[][] s2,
+	protected Tetromino(Block[][] g, Block[][] s0, Block[][] s1, Block[][] s2,
 			Block[][] s3) {
 		assert g.length == 22 : "Grid should be 22 high";
 		assert g[0].length == 10 : "Grid should be 10 wide";
-		// assert x <= 3 && x >= -3 : "Horizontal offset invalid";
-		// assert y >= 0 && y <= 20 : "Vertical offset invalid";
-
+		if (g == null || s0 == null || s1 == null || s2 == null || s3 == null)
+			throw new InvalidParameterException(
+					"Constructor arguments cannot be null.");
 		grid = g;
 		sprite0 = s0;
 		sprite1 = s1;
@@ -56,9 +66,6 @@ public abstract class Tetromino implements Playable {
 		sprites[2] = sprite2;
 		sprites[3] = sprite3;
 
-		if (grid == null)
-			return;
-
 		for (int i = 0; i < sprite0.length; i++) {
 			for (int j = 0; j < sprite0[i].length; j++) {
 				grid[21 - i][3 + j] = sprite0[i][j];
@@ -67,9 +74,56 @@ public abstract class Tetromino implements Playable {
 		x = 0;
 		y = 20;
 		rotation = 0;
+
+		Pattern p = Pattern.compile("(?:.*\\.)*(.*)");
+		Matcher m = p.matcher(getClass().getName());
+		m.find();
+		String ghostClassName = "mino.ghosts." + m.group(1);
+		Ghost ghostInstance = null;
+		try {
+			Class<?> c = Class.forName(ghostClassName);
+			Constructor<?> ctor = c.getConstructor();
+			ghostInstance = (Ghost) ctor.newInstance();
+		} catch (ClassNotFoundException e) {
+			System.out.println("Cannot load ghost tetromino sprite "
+					+ m.group(1) + ". The qualified class "
+					+ e.getMessage() + " was not found.");
+		} catch (NoSuchMethodException | SecurityException e) {
+			System.out.println("Cannot load data for ghost tetromino sprite "
+					+ m.group(1) + ". " + e.getMessage());
+		} catch (InstantiationException | IllegalAccessException
+				| IllegalArgumentException | InvocationTargetException e) {
+			System.out.println("Cannot load data for ghost tetromino sprite "
+					+ m.group(1) + ". " + e.getMessage());
+		}
+		assert ghostInstance != null;
+		ghost = ghostInstance;
+		ghostY = y;
+		ghosts = new Block[4][sprite0.length][sprite0.length];
+		ghosts[0] = sprite0.clone();
+		ghosts[1] = sprite1.clone();
+		ghosts[2] = sprite2.clone();
+		ghosts[3] = sprite3.clone();
+		for (int n = 0; n < 4; n++)
+			for (int i = 0; i < sprite0.length; i++)
+				for (int j = 0; j < sprite0[i].length; j++)
+					if (!ghosts[n][i][j].isEmpty())
+						ghosts[n][i][j] = ghost;
 	}
 
-	Tetromino(Block[][] g, Block[][] s0, Block[][] s1, Block[][] s2,
+	/**
+	 * @param g
+	 *            The game grid
+	 * @param s0
+	 * @param s1
+	 * @param s2
+	 * @param s3
+	 * @param r
+	 *            Clockwise wall kick data
+	 * @param l
+	 *            Counterclockwise wall kick data
+	 */
+	protected Tetromino(Block[][] g, Block[][] s0, Block[][] s1, Block[][] s2,
 			Block[][] s3, int[][][] r, int[][][] l) {
 		this(g, s0, s1, s2, s3);
 		rightWallKickData = r;
@@ -96,22 +150,34 @@ public abstract class Tetromino implements Playable {
 	}
 
 	@Override
-	public boolean hardDrop() {
+	public int hardDrop() {
 		removeSprite();
-		while (isValid(x, y - 1, rotation)) {
-			y--;
+		int distance = computeGhost();
+		putSprite(x, ghostY, rotation);
+		return distance;
+	}
+
+	private int computeGhost() {
+		int distance = 0;
+		ghostY = y;
+		while (isValid(x, ghostY - 1, rotation)) {
+			ghostY--;
+			distance++;
 		}
-		restoreSprite();
-		return true;
+		if (ghostY != y)
+			putGhost();
+		return distance;
 	}
 
 	@Override
 	public boolean moveDown() {
+		removeGhost();
 		removeSprite();
 		if (!isValid(x, y - 1, rotation)) {
 			restoreSprite();
 			return false;
 		}
+		computeGhost();
 		putSprite(x, y - 1, rotation);
 		return true;
 	}
@@ -123,7 +189,9 @@ public abstract class Tetromino implements Playable {
 			restoreSprite();
 			return false;
 		}
+		removeGhost();
 		putSprite(x - 1, y, rotation);
+		computeGhost();
 		return true;
 	}
 
@@ -134,30 +202,38 @@ public abstract class Tetromino implements Playable {
 			restoreSprite();
 			return false;
 		}
+		removeGhost();
 		putSprite(x + 1, y, rotation);
+		computeGhost();
 		return true;
 	}
 
 	@Override
 	public boolean rotateRight() {
+		removeGhost();
 		removeSprite();
-		if (rightWallKick(x, y, rotation))
-			return false;
-		restoreSprite();
-		return true;
+		if (tryRotateRight()) { // success
+			computeGhost();
+			return true;
+		}
+		return false;
 	}
 
 	@Override
 	public boolean rotateLeft() {
+		removeGhost();
 		removeSprite();
-		if (leftWallKick(x, y, rotation))
-			return false;
-		restoreSprite();
-		return true;
+		if (tryRotateLeft()) { // success
+			computeGhost();
+			return true;
+		}
+		return false;
 	}
 
 	@Override
 	public boolean softDrop() {
+		removeGhost();
+		computeGhost();
 		return moveDown();
 	}
 
@@ -180,6 +256,11 @@ public abstract class Tetromino implements Playable {
 	}
 
 	/**
+	 * If checking if a sprite will be valid, first remove the sprite from the
+	 * grid with {@link #removeSprite() removeSprite}, call this method, and
+	 * finally return the sprite to its original position with
+	 * {@link #restoreSprite() restoreSprite}.
+	 *
 	 * @param x
 	 *            New horizontal offset from center
 	 * @param y
@@ -188,7 +269,7 @@ public abstract class Tetromino implements Playable {
 	 *            New rotation state
 	 * @return
 	 */
-	boolean isValid(int x, int y, int n) {
+	protected boolean isValid(int x, int y, int n) {
 		n = mod0to3(n);
 		if (!(x >= -5 && x <= 5) && !(y >= 0 && y <= 21))
 			return false;
@@ -208,19 +289,16 @@ public abstract class Tetromino implements Playable {
 	}
 
 	/**
-	 * @param x
-	 * @param y
-	 * @param n
-	 *            The current rotation state.
-	 * @return True, if a wall kick succeeds; false, if none executed.
+	 * Try to rotate the current tetromino with wall kicks.
+	 *
+	 * @return True, if a rotation succeeds; false, if none executed.
 	 */
-	boolean leftWallKick(int x, int y, int n) {
-		n = mod0to3(n);
-		for (int i = 0; i < leftWallKickData[n].length; i++) {
-			int x_offset = leftWallKickData[n][i][0];
-			int y_offset = leftWallKickData[n][i][1];
-			if (isValid(x + x_offset, y + y_offset, n - 1)) {
-				putSprite(x + x_offset, y + y_offset, n - 1);
+	protected boolean tryRotateLeft() {
+		for (int i = 0; i < leftWallKickData[rotation].length; i++) {
+			int x_offset = leftWallKickData[rotation][i][0];
+			int y_offset = leftWallKickData[rotation][i][1];
+			if (isValid(x + x_offset, y + y_offset, rotation - 1)) {
+				putSprite(x + x_offset, y + y_offset, rotation - 1);
 				return true;
 			}
 		}
@@ -228,19 +306,16 @@ public abstract class Tetromino implements Playable {
 	}
 
 	/**
-	 * @param x
-	 * @param y
-	 * @param n
-	 *            The current rotation state.
-	 * @return True, if a wall kick succeeds; false, if none executed.
+	 * Try to rotate the current tetromino clockwise with wall kicks.
+	 *
+	 * @return True, if a rotation succeeds; false, if none executed.
 	 */
-	boolean rightWallKick(int x, int y, int n) {
-		n = mod0to3(n);
-		for (int i = 0; i < rightWallKickData[n].length; i++) {
-			int x_offset = rightWallKickData[n][i][0];
-			int y_offset = rightWallKickData[n][i][1];
-			if (isValid(x + x_offset, y + y_offset, n + 1)) {
-				putSprite(x + x_offset, y + y_offset, n + 1);
+	protected boolean tryRotateRight() {
+		for (int i = 0; i < rightWallKickData[rotation].length; i++) {
+			int x_offset = rightWallKickData[rotation][i][0];
+			int y_offset = rightWallKickData[rotation][i][1];
+			if (isValid(x + x_offset, y + y_offset, rotation + 1)) {
+				putSprite(x + x_offset, y + y_offset, rotation + 1);
 				return true;
 			}
 		}
@@ -251,7 +326,7 @@ public abstract class Tetromino implements Playable {
 	 * Put the sprite back where it was (as defined by its instance fields).
 	 * Used after calling {@link #removeSprite() removeSprite}.
 	 */
-	private void restoreSprite() {
+	protected void restoreSprite() {
 		putSprite(x, y, rotation);
 	}
 
@@ -269,6 +344,26 @@ public abstract class Tetromino implements Playable {
 		rotation = n;
 	}
 
+	private void putGhost() {
+		Block[][] gs = ghosts[rotation];
+		for (int i = 0; i < gs.length; i++) {
+			for (int j = 0; j < gs[i].length; j++) {
+				if (!gs[i][j].isEmpty())
+					grid[ghostY - i + 1][3 + x + j] = gs[i][j];
+			}
+		}
+	}
+
+	public void removeGhost() {
+		Block[][] gs = ghosts[rotation];
+		for (int i = 0; i < gs.length; i++)
+			for (int j = 0; j < gs[i].length; j++) {
+				if (gs[i][j].isEmpty())
+					continue;
+				grid[y - i + 1][3 + j + x] = e;
+			}
+	}
+
 	/**
 	 * @param n
 	 * @return
@@ -281,7 +376,7 @@ public abstract class Tetromino implements Playable {
 
 	public void removeSprite() {
 		Block[][] s = sprites[rotation];
-		for (int i = 0; i < s.length; i++) {
+		for (int i = 0; i < s.length; i++)
 			for (int j = 0; j < s[i].length; j++) {
 				if (s[i][j].isEmpty())
 					continue;
@@ -289,7 +384,6 @@ public abstract class Tetromino implements Playable {
 				int gridy = y - i + 1;
 				grid[gridy][gridx] = e;
 			}
-		}
 	}
 
 	public void respawnSprite() {
@@ -297,6 +391,7 @@ public abstract class Tetromino implements Playable {
 		y = 20;
 		rotation = 0;
 		restoreSprite();
+		computeGhost();
 	}
 
 	public boolean isOnSurface() {
@@ -318,16 +413,16 @@ public abstract class Tetromino implements Playable {
 
 	/**
 	 * Call this method before clearing lines.
+	 *
 	 * @return
 	 */
 	public boolean isTSpin() {
 		if (type() == Tetrominos.T) {
 			removeSprite();
-			boolean immobile =
-					!((isValid(x, y - 1, rotation)
+			boolean immobile = !((isValid(x, y - 1, rotation)
 					|| isValid(x, y + 1, rotation)
-					|| isValid(x - 1, y, rotation)
-					|| isValid(x + 1, y, rotation)));
+					|| isValid(x - 1, y, rotation) || isValid(x + 1, y,
+					rotation)));
 			restoreSprite();
 			if (immobile)
 				return true;

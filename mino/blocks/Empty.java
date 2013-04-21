@@ -1,9 +1,11 @@
 /**
  *
  */
-package block;
+package mino.blocks;
 
 import java.io.IOException;
+
+import mino.Block;
 
 /**
  * @author David Xu

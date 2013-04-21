@@ -14,7 +14,10 @@ public interface Playable {
 
 	public boolean moveDown();
 
-	public boolean hardDrop();
+	/**
+	 * @return Number of lines the tetromino hard-dropped
+	 */
+	public int hardDrop();
 
 	public boolean softDrop();
 

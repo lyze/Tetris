@@ -3,8 +3,8 @@
  */
 package tetromino;
 
-import block.Block;
-import block.Empty;
+import mino.Block;
+import mino.blocks.Empty;
 
 /**
  * @author David Xu
@@ -12,7 +12,7 @@ import block.Empty;
  */
 public class L extends Tetromino {
 	private final static Block e = new Empty();
-	private final static Block l = new block.L();
+	private final static Block l = new mino.blocks.L();
 	private final static Block[][] sprite0 = { { e, e, l },
 				 						       { l, l, l },
 				 						       { e, e, e } };

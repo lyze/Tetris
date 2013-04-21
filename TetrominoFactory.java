@@ -8,11 +8,9 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
 
-import javax.lang.model.element.UnknownElementException;
-
+import mino.Block;
 import tetromino.Tetromino;
 import tetromino.Tetrominos;
-import block.Block;
 
 /**
  * Generate pieces according to randomization per each 7-piece bag
@@ -97,28 +95,19 @@ public class TetrominoFactory {
 			Object[] initargs = { grid };
 			return (Tetromino) ctor.newInstance(initargs);
 		} catch (ClassNotFoundException e) {
-			System.out.println("Internal error: Could not generate tetromino "
-					+ t.toString() + ". " + e.getMessage());
-		} catch (NoSuchMethodException e) {
-			System.out.println("Internal error: Could not generate tetromino "
-					+ t.toString() + ". " + e.getMessage());
-		} catch (SecurityException e) {
-			System.out.println("Internal error: Could not generate tetromino "
-					+ t.toString() + ". " + e.getMessage());
-		} catch (InstantiationException e) {
-			System.out.println("Internal error: Could not generate tetromino "
-					+ t.toString() + ". " + e.getMessage());
-		} catch (IllegalAccessException e) {
-			System.out.println("Internal error: Could not generate tetromino "
-					+ t.toString() + ". " + e.getMessage());
-		} catch (IllegalArgumentException e) {
-			System.out.println("Internal error: Could not generate tetromino "
-					+ t.toString() + ". " + e.getMessage());
-		} catch (InvocationTargetException e) {
-			System.out.println("Internal error: Could not generate tetromino "
-					+ t.toString() + ". " + e.getMessage());
+			System.out.println("Cannot generate tetromino " + t
+					+ ". The qualified class " + e.getMessage()
+					+ "was not found.");
+		} catch (NoSuchMethodException | SecurityException e) {
+			System.out.println("Cannot generate tetromino " + t + ". "
+					+ e.getMessage());
+		} catch (InstantiationException | IllegalAccessException
+				| IllegalArgumentException | InvocationTargetException e) {
+			System.out.println("Cannot generate tetromino " + t + ". "
+					+ e.getCause());
 		}
-		throw new UnknownElementException(null, t);
+		throw new RuntimeException("Cannot generate tetromino " + t
+				+ ". Could not find its respective class.");
 	}
 
 	public void reset() {

@@ -22,10 +22,10 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.Timer;
 
+import mino.Block;
+import mino.blocks.Empty;
 import tetromino.Tetromino;
 import tetromino.Tetrominos;
-import block.Block;
-import block.Empty;
 
 /**
  * The grid is stored in a 2D array, enumerating rows from bottom-to-top, then
@@ -72,7 +72,7 @@ public class Grid extends JComponent {
 	final int WIDTH = Block.WIDTH * 10; // 240
 	final int HEIGHT = Block.HEIGHT * 20 + Block.PARTIAL; // 484 = 24 * 20 + 4
 
-	private final static Block emptyBlock = new block.Empty();
+	private final static Block emptyBlock = new Empty();
 
 	private int maxHeight = 0;
 	private int height = 0;
@@ -87,7 +87,6 @@ public class Grid extends JComponent {
 
 	/**
 	 * @param status
-	 *            TODO
 	 * @param s
 	 *            Score
 	 * @param q
@@ -167,6 +166,7 @@ public class Grid extends JComponent {
 					current.removeSprite();
 					Tetromino temp = hold;
 					hold = current;
+					current.removeGhost();
 					holdPreview.setIcon(new Icon() {
 
 						@Override
@@ -180,10 +180,10 @@ public class Grid extends JComponent {
 												.toString() + "_21.png")), 0,
 										0, null);
 							} catch (IOException e) {
-								System.out.println(
-										"Could not generate hold preview for "
-										+ current.type().toString()
-										+ " tetromino.");
+								System.out
+										.println("Could not generate hold preview for "
+												+ current.type().toString()
+												+ " tetromino.");
 							}
 						}
 
@@ -197,7 +197,6 @@ public class Grid extends JComponent {
 							return 84;
 						}
 					});
-					holdPreview.revalidate();
 					holdPreview.repaint();
 					if (temp == null) {
 						current = factory.next();
@@ -219,10 +218,14 @@ public class Grid extends JComponent {
 						lockdownTimer.restart();
 					break;
 				case KeyEvent.VK_UP:
-					current.softDrop();
+					if (current.softDrop()) {
+						score += 1;
+						scoreStatus.setText(Integer.toString(score));
+					}
 					break;
 				case KeyEvent.VK_DOWN:
-					current.hardDrop();
+					score += 2 * current.hardDrop();
+					scoreStatus.setText(Integer.toString(score));
 					lockdown();
 					break;
 				case KeyEvent.VK_LEFT:
@@ -472,8 +475,7 @@ public class Grid extends JComponent {
 		}
 
 		queue = factory.getInQueue(queuePreview.length);
-		for (final MutableInt n = new MutableInt(0); n.value < queue.length;
-																	n.value++) {
+		for (final MutableInt n = new MutableInt(0); n.value < queue.length; n.value++) {
 			queuePreview[n.value].setIcon(new Icon() {
 				private final int i = n.value;
 
@@ -535,6 +537,7 @@ public class Grid extends JComponent {
 		queue = null;
 		hold = null;
 		lines = 0;
+		linesStatus.setText(Integer.toString(lines));
 		minutes = 0;
 		seconds = 0;
 		time.setText("00:00.00");
@@ -543,6 +546,8 @@ public class Grid extends JComponent {
 		levelStatus.setText("1");
 		goal = 5;
 		goalStatus.setText("5");
+		score = 0;
+		scoreStatus.setText(Integer.toString(score));
 	}
 
 	public void pause() {
@@ -575,7 +580,6 @@ public class Grid extends JComponent {
 		try {
 			g.drawImage(ImageIO.read(new File("background.png")), 0, 0, null);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			System.out
 					.println("Internal error: Could not load background image."
 							+ e.getMessage());

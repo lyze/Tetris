@@ -1,7 +1,7 @@
 /**
  *
  */
-package block;
+package mino;
 
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
@@ -30,7 +30,8 @@ public class Block {
 			try {
 				sprite = ImageIO.read(new File(filename));
 			} catch (IOException e) {
-				System.err.print("Error processing tetromino sprite");
+				System.out.println("Cannot process tetromino sprite \""
+						+ filename + "\". " + e.getMessage());
 			}
 	}
 

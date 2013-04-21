@@ -1,4 +1,6 @@
-package block;
+package mino.blocks;
+
+import mino.Block;
 
 public class T extends Block {
 
@@ -7,7 +9,7 @@ public class T extends Block {
 	 *
 	 */
 	public T() {
-		super("block/T.png");
+		super("mino/blocks/T.png");
 	}
 
 }
