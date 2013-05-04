@@ -86,11 +86,9 @@ public class TetrominoFactory {
 	}
 
 	private Tetromino makeTetromino() {
-		if (bag.size() == 0)
-			bag.addAll(generateBag());
 		Tetrominos t = bag.remove();
 		try {
-			Class<?> c = Class.forName("tetromino." + t.toString());
+			Class<?> c = Class.forName("tetromino." + t);
 			Constructor<?> ctor = c.getConstructor(Block[][].class);
 			Object[] initargs = { grid };
 			return (Tetromino) ctor.newInstance(initargs);

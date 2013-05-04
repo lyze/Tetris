@@ -86,8 +86,8 @@ public abstract class Tetromino implements Playable {
 			ghostInstance = (Ghost) ctor.newInstance();
 		} catch (ClassNotFoundException e) {
 			System.out.println("Cannot load ghost tetromino sprite "
-					+ m.group(1) + ". The qualified class "
-					+ e.getMessage() + " was not found.");
+					+ m.group(1) + ". The qualified class " + e.getMessage()
+					+ " was not found.");
 		} catch (NoSuchMethodException | SecurityException e) {
 			System.out.println("Cannot load data for ghost tetromino sprite "
 					+ m.group(1) + ". " + e.getMessage());
@@ -100,15 +100,14 @@ public abstract class Tetromino implements Playable {
 		ghost = ghostInstance;
 		ghostY = y;
 		ghosts = new Block[4][sprite0.length][sprite0.length];
-		ghosts[0] = sprite0.clone();
-		ghosts[1] = sprite1.clone();
-		ghosts[2] = sprite2.clone();
-		ghosts[3] = sprite3.clone();
 		for (int n = 0; n < 4; n++)
 			for (int i = 0; i < sprite0.length; i++)
-				for (int j = 0; j < sprite0[i].length; j++)
-					if (!ghosts[n][i][j].isEmpty())
+				for (int j = 0; j < sprite0[i].length; j++) {
+					if (sprites[n][i][j].isEmpty())
+						ghosts[n][i][j] = e;
+					else
 						ghosts[n][i][j] = ghost;
+				}
 	}
 
 	/**
@@ -177,8 +176,9 @@ public abstract class Tetromino implements Playable {
 			restoreSprite();
 			return false;
 		}
+		y--;
 		computeGhost();
-		putSprite(x, y - 1, rotation);
+		restoreSprite();
 		return true;
 	}
 
@@ -190,8 +190,9 @@ public abstract class Tetromino implements Playable {
 			return false;
 		}
 		removeGhost();
-		putSprite(x - 1, y, rotation);
+		x--;
 		computeGhost();
+		restoreSprite();
 		return true;
 	}
 
@@ -203,8 +204,9 @@ public abstract class Tetromino implements Playable {
 			return false;
 		}
 		removeGhost();
-		putSprite(x + 1, y, rotation);
+		x++;
 		computeGhost();
+		restoreSprite();
 		return true;
 	}
 
@@ -214,6 +216,7 @@ public abstract class Tetromino implements Playable {
 		removeSprite();
 		if (tryRotateRight()) { // success
 			computeGhost();
+			restoreSprite();
 			return true;
 		}
 		return false;
@@ -225,6 +228,7 @@ public abstract class Tetromino implements Playable {
 		removeSprite();
 		if (tryRotateLeft()) { // success
 			computeGhost();
+			restoreSprite();
 			return true;
 		}
 		return false;
@@ -271,7 +275,7 @@ public abstract class Tetromino implements Playable {
 	 */
 	protected boolean isValid(int x, int y, int n) {
 		n = mod0to3(n);
-		if (!(x >= -5 && x <= 5) && !(y >= 0 && y <= 21))
+		if (!(x >= -5 && x <= 5) || !(y >= 0 && y <= 21))
 			return false;
 		Block[][] rotated = sprites[n];
 		for (int i = 0; i < rotated.length; i++) {
@@ -279,8 +283,8 @@ public abstract class Tetromino implements Playable {
 				int gridx = 3 + j + x;
 				int gridy = y - i + 1;
 				if (!rotated[i][j].isEmpty()
-						&& (gridx < 0 || gridx > 9 || gridy < 0 || gridy > 21 || !grid[gridy][gridx]
-								.isEmpty())) {
+						&& (gridx < 0 || gridx > 9 || gridy < 0 || gridy > 21
+								|| !grid[gridy][gridx].isEmpty())) {
 					return false;
 				}
 			}
@@ -298,7 +302,9 @@ public abstract class Tetromino implements Playable {
 			int x_offset = leftWallKickData[rotation][i][0];
 			int y_offset = leftWallKickData[rotation][i][1];
 			if (isValid(x + x_offset, y + y_offset, rotation - 1)) {
-				putSprite(x + x_offset, y + y_offset, rotation - 1);
+				x += x_offset;
+				y += y_offset;
+				rotation = mod0to3(rotation - 1);
 				return true;
 			}
 		}
@@ -315,7 +321,9 @@ public abstract class Tetromino implements Playable {
 			int x_offset = rightWallKickData[rotation][i][0];
 			int y_offset = rightWallKickData[rotation][i][1];
 			if (isValid(x + x_offset, y + y_offset, rotation + 1)) {
-				putSprite(x + x_offset, y + y_offset, rotation + 1);
+				x += x_offset;
+				y += y_offset;
+				rotation = mod0to3(rotation + 1);
 				return true;
 			}
 		}
@@ -345,22 +353,22 @@ public abstract class Tetromino implements Playable {
 	}
 
 	private void putGhost() {
-		Block[][] gs = ghosts[rotation];
-		for (int i = 0; i < gs.length; i++) {
-			for (int j = 0; j < gs[i].length; j++) {
-				if (!gs[i][j].isEmpty())
-					grid[ghostY - i + 1][3 + x + j] = gs[i][j];
+		Block[][] s = sprites[rotation];
+		for (int i = 0; i < s.length; i++) {
+			for (int j = 0; j < s[i].length; j++) {
+				if (!s[i][j].isEmpty())
+					grid[ghostY - i + 1][3 + x + j] = ghost;
 			}
 		}
 	}
 
 	public void removeGhost() {
-		Block[][] gs = ghosts[rotation];
-		for (int i = 0; i < gs.length; i++)
-			for (int j = 0; j < gs[i].length; j++) {
-				if (gs[i][j].isEmpty())
+		Block[][] s = sprites[rotation];
+		for (int i = 0; i < s.length; i++)
+			for (int j = 0; j < s[i].length; j++) {
+				if (s[i][j].isEmpty())
 					continue;
-				grid[y - i + 1][3 + j + x] = e;
+				grid[ghostY - i + 1][3 + j + x] = e;
 			}
 	}
 
