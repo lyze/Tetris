@@ -17,47 +17,49 @@ and the game ends when the stack of tetrominos reaches the top of the playing
 field and no new tetrominos are able to enter. In this implementation, 
 completing 15 levels is a player victory. 
 
+
 Features
 --------
 
-	* Hold button
-	* Queue preview
-	* SRS (Super Rotation System scheme) implementation (floor and wall kicks)
-	* Randomization per 7-piece bag (interesting implementation)
-	* Scoring and line clearing closely emulates [TetrisFriends Marathon mode] (http://www.tetrisfriends.com/help/tips_appendix.php#scoringchart)
-		* No distinction between Mini and non-Mini T-Spins since lame factor
+* Hold button
+* Queue preview
+* SRS (Super Rotation System scheme) implementation (floor and wall kicks)
+* Randomization per 7-piece bag (interesting implementation)
+* Scoring and line clearing closely emulates <a href="http://www.tetrisfriends.com/help/tips_appendix.php#scoringchart">Tetris Marathon mode</a>
+	* No distinction between Mini and non-Mini T-Spins since lame factor
 	
 
 Minor Features
 --------------
 
-	* Tetromino sprites
-	* Elapsed time
-	* Lines cleared
-	* Used custom font file
-	* Game pause on focus loss
+* Tetromino sprites
+* Elapsed time
+* Lines cleared
+* Used custom font file
+* Game pause on focus loss
 	
-	
-	
- 
- 
+
 Controls
 -------- 
- 
-	* Z - Rotate left
-	* X - Rotate right
-	* [LEFT] - Move left
-	* [RIGHT] - Move right
-	* [UP] - Soft drop
-	* [DOWN] - Hard drop
-	* [SHIFT] - Hold
-	* [ESC] - (Un-)Pause
 
-Data Structures
----------------
+| Key       | Function     |
+| --------- | ------------ |
+| `Z`       | Rotate left  |
+| `X`       | Rotate right |
+| `[LEFT]`  | Move left    |
+| `[RIGHT]` | Move right   |
+| `[UP]`    | Soft drop    |
+| `[DOWN]`  | Hard drop    |
+| `[SHIFT]` | Hold         |
+| `[ESC]`   | (Un-)Pause   |
 
-	* 2D array of blocks for the main field.
-		- Tetrominos consist of "blocks"
-	* Deque used in an "interesting" implementation of tetromino bag generator
+
+Things to Implement
+-------------------
+    * DAS functionality
+    * Darker shade of blocks already locked down (to distinguish from active tetrominos)
+    * Line clear animation
+    * Name of the line clear performed
+    * Sound effects
   
   
