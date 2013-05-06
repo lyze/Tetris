@@ -1,8 +1,6 @@
 Tetris
 ======
 
-As implemented by David Xu for a CIS 120 homework assignment
-
 Background
 ----------
 Tetris is played by maneuvering geometric shapes called "tetrominos" as they
