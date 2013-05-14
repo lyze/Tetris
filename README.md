@@ -56,7 +56,7 @@ Controls
 
 Things to Implement
 -------------------
-    * DAS functionality
+    * Delayed auto shift (key autorepeat rate) setting 
     * Darker shade of blocks already locked down (to distinguish from active tetrominos)
     * Line clear animation
     * Name of the line clear performed
