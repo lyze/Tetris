@@ -1,6 +1,6 @@
 Tetris
 ======
-_TODO: Do this in Scala_
+_TODO: Do this in Scala and make tetromino generation cleaner_
 
 Background
 ----------
